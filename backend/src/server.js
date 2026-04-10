@@ -30,7 +30,7 @@ app.get('/api/health', (req, res) => {
 // Setup Socket.IO handlers
 setupSocketHandlers(io);
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 server.listen(PORT, () => {
   console.log(`Mahjong server running on port ${PORT}`);

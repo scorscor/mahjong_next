@@ -137,7 +137,7 @@ npm start
 npm test
 ```
 
-后端服务将在 `http://localhost:3000` 启动
+后端服务将在 `http://localhost:3001` 启动
 
 ### 安装前端
 
@@ -161,9 +161,9 @@ npm run preview
 
 | 变量名 | 默认值 | 说明 |
 |--------|--------|------|
-| `PORT` | 3000 | 后端服务端口 |
+| `PORT` | 3001 | 后端服务端口 |
 | `NODE_ENV` | development | 运行环境 |
-| `VITE_SOCKET_URL` | http://localhost:3000 | 前端 Socket 服务器地址 |
+| `VITE_SOCKET_URL` | http://localhost:3001 | 前端 Socket 服务器地址 |
 
 ## 🎯 游戏规则
 
@@ -291,7 +291,7 @@ cd backend
 docker build -t mahjong-next .
 
 # 运行容器
-docker run -p 3000:3000 mahjong-next
+docker run -p 3001:3001 mahjong-next
 ```
 
 ### Vercel 部署（前端）

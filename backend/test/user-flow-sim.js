@@ -4,7 +4,7 @@
  */
 import { io as ioClient } from 'socket.io-client'
 
-const URL = 'http://localhost:3000'
+const URL = 'http://localhost:3001'
 const results = { passed: 0, failed: 0, failures: [] }
 
 function assert(condition, msg) {

@@ -6,9 +6,9 @@ services:
         NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmmirror.com}
     environment:
       NODE_ENV: production
-      PORT: 3000
-    ports:
-      - "${BACKEND_PORT:-3000}:3000"
+      PORT: 3001
+    expose:
+      - "3001"
     restart: unless-stopped
 
   frontend:

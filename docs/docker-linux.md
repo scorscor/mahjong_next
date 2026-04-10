@@ -16,7 +16,7 @@ docker compose up --build -d
 启动后：
 
 - 前端地址：`http://localhost:3001`
-- 后端健康检查：`http://localhost:3000/api/health`
+- 健康检查地址：`http://localhost:3001/api/health`
 
 ## 停止项目
 
@@ -27,7 +27,7 @@ docker compose down
 ## 自定义端口
 
 ```bash
-FRONTEND_PORT=80 BACKEND_PORT=3000 docker compose up --build -d
+FRONTEND_PORT=3001 docker compose up --build -d
 ```
 
 ## 自定义 npm 镜像源

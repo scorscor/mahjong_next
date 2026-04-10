@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { io as ioClient } from 'socket.io-client'
 
-const SERVER_URL = 'http://localhost:3000'
+const SERVER_URL = 'http://localhost:3001'
 
 // Helper: create a client with a promise-based interface
 function createClient() {

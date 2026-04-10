@@ -3,7 +3,7 @@ import { io } from 'socket.io-client'
 let socket = null
 
 const DEFAULT_SERVER_URL =
-  typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
+  typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001'
 
 const SERVER_URL = import.meta.env.VITE_SOCKET_URL || DEFAULT_SERVER_URL
 

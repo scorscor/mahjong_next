@@ -5,13 +5,13 @@
  * produce correctly structured data. Runs one clean game session through
  * a single draw-discard cycle, validating each event's payload structure.
  *
- * Prerequisites: Backend server running at http://localhost:3000
+ * Prerequisites: Backend server running at http://localhost:3001
  */
 
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { io as ioClient } from 'socket.io-client'
 
-const SERVER_URL = 'http://localhost:3000'
+const SERVER_URL = 'http://localhost:3001'
 const TIMEOUT = 15000
 
 function createClient(name) {

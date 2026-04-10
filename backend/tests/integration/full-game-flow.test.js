@@ -5,7 +5,7 @@
  * a complete 4-round mahjong match. Validates all Socket events,
  * game mechanics, and match session scoring.
  *
- * Prerequisites: Backend server must be running at http://localhost:3000
+ * Prerequisites: Backend server must be running at http://localhost:3001
  *   cd D:/work/mojang_next/backend && npm run dev
  *
  * Run: npx vitest run tests/integration/full-game-flow.test.js
@@ -14,7 +14,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import { io as ioClient } from 'socket.io-client'
 
-const SERVER_URL = 'http://localhost:3000'
+const SERVER_URL = 'http://localhost:3001'
 const TIMEOUT = 15000
 const TOTAL_ROUNDS = 4
 
