@@ -1,0 +1,20 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    restart: unless-stopped
