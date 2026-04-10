@@ -1,4 +1,5 @@
 import { gameStore } from '../store/GameStore.js';
+import { MahjongGame } from '../game/MahjongGame.js';
 
 const QUICK_PHRASES = [
   '等等我', '打快一点', '不好意思', '厉害',
@@ -157,8 +158,10 @@ export function setupSocketHandlers(io) {
 
       if (result.success) {
         if (result.drawGame) {
+          room.endGame();
           io.to(roomId).emit('game_over', buildGameOverPayload(room, null, false, true, null));
         } else if (result.selfDrawWin) {
+          room.endGame();
           io.to(roomId).emit('game_over', buildGameOverPayload(room, playerIndex, true, false, result.fan));
         } else {
           const state = room.game.getStateForPlayer(playerIndex);
@@ -197,8 +200,10 @@ export function setupSocketHandlers(io) {
 
       if (result.success) {
         if (result.drawGame) {
+          room.endGame();
           io.to(roomId).emit('game_over', buildGameOverPayload(room, null, false, true, null));
         } else if (result.selfDrawWin) {
+          room.endGame();
           io.to(roomId).emit('game_over', buildGameOverPayload(room, playerIndex, true, false, result.fan));
         } else {
           io.to(roomId).emit('claim_resolved', {
@@ -263,10 +268,17 @@ export function setupSocketHandlers(io) {
             });
           }
 
-          io.to(roomId).emit('claim_window_opened', {
-            discardTile: tile,
-            discardedBy: playerIndex,
-            potentialClaimers: [...playerClaims.keys()]
+          // Start 30s claim timeout
+          room.game.startClaimTimer(() => {
+            const game = room.game;
+            if (!game || !game.claimWindow || game.claimWindow.resolved) return;
+            const result = game._forcePassAll();
+            if (result && result.resolved === 'pass') {
+              io.to(roomId).emit('claim_resolved', {
+                type: 'pass',
+                nextPlayer: result.nextPlayer
+              });
+            }
           });
         }
       } else {
@@ -287,10 +299,12 @@ export function setupSocketHandlers(io) {
         return;
       }
 
+      room.game.clearClaimTimer();
       const result = room.game.declareClaim(playerIndex, claimType, chowTiles);
 
       if (result.success && result.resolved) {
         if (result.resolved === 'win') {
+          room.endGame();
           io.to(roomId).emit('claim_resolved', {
             type: 'win',
             playerIndex: result.winner,
@@ -332,13 +346,35 @@ export function setupSocketHandlers(io) {
       const playerIndex = room.getPlayerIndex(socket.id);
       if (playerIndex === -1) return;
 
+      room.game.clearClaimTimer();
       const result = room.game.passClaim(playerIndex);
 
-      if (result.success && result.resolved === 'pass') {
-        io.to(roomId).emit('claim_resolved', {
-          type: 'pass',
-          nextPlayer: result.nextPlayer
-        });
+      if (result.success && result.resolved) {
+        if (result.resolved === 'win') {
+          room.endGame();
+          io.to(roomId).emit('claim_resolved', {
+            type: 'win',
+            playerIndex: result.winner,
+            fan: result.fan
+          });
+          io.to(roomId).emit('game_over', buildGameOverPayload(room, result.winner, false, false, result.fan));
+        } else if (result.resolved === 'pong' || result.resolved === 'chow' || result.resolved === 'kong') {
+          io.to(roomId).emit('claim_resolved', {
+            type: result.resolved,
+            playerIndex: result.playerIndex,
+            currentPlayer: result.currentPlayer
+          });
+          for (let i = 0; i < room.players.length; i++) {
+            const state = room.game.getStateForPlayer(i);
+            state.playerIndex = i;
+            io.to(room.players[i].id).emit('game_state_update', state);
+          }
+        } else if (result.resolved === 'pass') {
+          io.to(roomId).emit('claim_resolved', {
+            type: 'pass',
+            nextPlayer: result.nextPlayer
+          });
+        }
       }
     });
 
@@ -364,8 +400,8 @@ export function setupSocketHandlers(io) {
 
       // Start next round
       room.state = 'playing';
+      if (room.game) room.game.clearClaimTimer();
       room.game = new MahjongGame(room.players, room.matchSession.dealerIndex);
-      room.endGame = undefined; // clear
 
       const matchInfo = room.matchSession.getState();
       for (let i = 0; i < room.players.length; i++) {
@@ -460,6 +496,7 @@ export function setupSocketHandlers(io) {
         state: room.state,
         isCreator: room.isCreator(socket.id),
         options: room.options,
+        matchSession: room.matchSession ? room.matchSession.getState() : null,
         game: room.game ? room.game.getStateForPlayer(playerIndex) : null
       });
     });

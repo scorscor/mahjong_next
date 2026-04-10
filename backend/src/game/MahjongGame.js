@@ -36,6 +36,7 @@ export class MahjongGame {
 
     // Claim lock state
     this.claimWindow = null;
+    this.claimTimerId = null;
 
     // Seat winds (0=east, 1=south, 2=west, 3=north)
     this.seatWinds = [0, 1, 2, 3];
@@ -70,26 +71,31 @@ export class MahjongGame {
   // Check and replace flower tiles
   _replaceFlowers() {
     let hasFlower = false;
-    for (let p = 0; p < 4; p++) {
-      const hand = this.hands[p];
-      const flowers = [];
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (let p = 0; p < 4; p++) {
+        const hand = this.hands[p];
+        const flowers = [];
 
-      // Find all flower tiles in hand
-      for (let i = hand.length - 1; i >= 0; i--) {
-        if (isFlowerTile(hand[i])) {
-          flowers.push(hand.splice(i, 1)[0]);
+        // Find all flower tiles in hand
+        for (let i = hand.length - 1; i >= 0; i--) {
+          if (isFlowerTile(hand[i])) {
+            flowers.push(hand.splice(i, 1)[0]);
+          }
         }
-      }
 
-      // Replace each flower with a tile from the back
-      if (flowers.length > 0) {
-        hasFlower = true;
-        this.flowerMelds[p].push(...flowers);
+        // Replace each flower with a tile from the back
+        if (flowers.length > 0) {
+          hasFlower = true;
+          changed = true;
+          this.flowerMelds[p].push(...flowers);
 
-        for (let i = 0; i < flowers.length; i++) {
-          const replacement = this.tileSet.drawOneFromBack();
-          if (replacement) {
-            hand.push(replacement);
+          for (let i = 0; i < flowers.length; i++) {
+            const replacement = this.tileSet.drawOneFromBack();
+            if (replacement) {
+              hand.push(replacement);
+            }
           }
         }
       }
@@ -201,8 +207,24 @@ export class MahjongGame {
       success: true,
       nextPlayer: this.currentPlayer,
       tilesLeft: this.tileSet.remaining,
-      potentialClaims
+      potentialClaims,
+      claimTimerNeeded: potentialClaims.length > 0
     };
+  }
+
+  startClaimTimer(onTimeout) {
+    this.clearClaimTimer();
+    this.claimTimerId = setTimeout(() => {
+      this.claimTimerId = null;
+      onTimeout();
+    }, 30000);
+  }
+
+  clearClaimTimer() {
+    if (this.claimTimerId) {
+      clearTimeout(this.claimTimerId);
+      this.claimTimerId = null;
+    }
   }
 
   // Get what claims are possible (sent to clients so they know their options)
@@ -267,6 +289,16 @@ export class MahjongGame {
     this.claimWindow.passes.add(playerIndex);
 
     // Try to resolve
+    return this._tryResolveClaims();
+  }
+
+  _forcePassAll() {
+    if (!this.claimWindow || this.claimWindow.resolved) return null;
+    for (const idx of this.claimWindow.requiredResponders) {
+      if (!this.claimWindow.claims.has(idx)) {
+        this.claimWindow.passes.add(idx);
+      }
+    }
     return this._tryResolveClaims();
   }
 
