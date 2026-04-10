@@ -55,7 +55,10 @@ export function setupSocketHandlers(io) {
         });
       }
 
-      const options = { totalRounds: data.totalRounds || 4 };
+      const options = {
+        totalRounds: data.totalRounds || 4,
+        roomPassword: data.roomPassword || '8888'
+      };
       const room = gameStore.createRoom(socket.id, options);
       const result = gameStore.joinRoom(room.id, { id: socket.id, name: data.name || 'Player' });
 
@@ -71,14 +74,18 @@ export function setupSocketHandlers(io) {
       }
     });
 
-    socket.on('join_room', ({ roomId, name }) => {
+    socket.on('join_room', ({ roomId, name, roomPassword }) => {
       if (!roomId) {
         socket.emit('error', { message: 'Room ID is required' });
         return;
       }
 
       const formattedId = roomId.toUpperCase().trim();
-      const result = gameStore.joinRoom(formattedId, { id: socket.id, name: name || 'Player' });
+      const result = gameStore.joinRoom(
+        formattedId,
+        { id: socket.id, name: name || 'Player' },
+        roomPassword || '8888'
+      );
 
       if (result.success) {
         socket.join(formattedId);

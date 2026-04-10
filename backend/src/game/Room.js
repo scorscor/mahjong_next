@@ -9,7 +9,8 @@ export class Room {
     this.state = 'waiting'; // waiting | playing | finished
     this.game = null;
     this.options = {
-      totalRounds: options.totalRounds || 4
+      totalRounds: options.totalRounds || 4,
+      roomPassword: options.roomPassword || '8888'
     };
     this.matchSession = null;
     this.createdAt = Date.now();

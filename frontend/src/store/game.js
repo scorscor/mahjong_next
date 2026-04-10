@@ -7,6 +7,7 @@ export const useGameStore = defineStore('game', () => {
   const playerIndex = ref(-1)
   const players = ref([])
   const isCreator = ref(false)
+  const roomPassword = ref('8888')
 
   // Game state
   const myHand = ref([])
@@ -30,9 +31,11 @@ export const useGameStore = defineStore('game', () => {
 
   function reset() {
     roomId.value = ''
+    playerName.value = ''
     playerIndex.value = -1
     players.value = []
     isCreator.value = false
+    roomPassword.value = '8888'
     myHand.value = []
     myMelds.value = []
     discardPile.value = []
@@ -64,7 +67,7 @@ export const useGameStore = defineStore('game', () => {
   }
 
   return {
-    roomId, playerName, playerIndex, players, isCreator,
+    roomId, playerName, playerIndex, players, isCreator, roomPassword,
     myHand, myMelds, discardPile, currentPlayer, hasDrawn,
     tilesLeft, lastDiscard, winner, finished,
     selectedTile, currentDrawnTile, availableClaims, gamePhase,

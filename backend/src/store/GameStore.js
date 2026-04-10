@@ -24,11 +24,14 @@ export class GameStore {
     return this.rooms.get(roomId);
   }
 
-  joinRoom(roomId, player) {
+  joinRoom(roomId, player, roomPassword = '8888') {
     const room = this.rooms.get(roomId);
     if (!room) return { success: false, reason: 'ROOM_NOT_FOUND' };
     if (room.isFull()) return { success: false, reason: 'ROOM_FULL' };
     if (room.state === 'playing') return { success: false, reason: 'GAME_IN_PROGRESS' };
+    if ((room.options.roomPassword || '8888') !== (roomPassword || '8888')) {
+      return { success: false, reason: 'INVALID_ROOM_PASSWORD' };
+    }
 
     if (!room.addPlayer(player)) {
       return { success: false, reason: 'ALREADY_JOINED' };

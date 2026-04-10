@@ -3,8 +3,8 @@
     <div class="room-header">
       <h2>房间号</h2>
       <div class="room-id">{{ roomId }}</div>
-      <div class="room-options">{{ totalRounds }}局制</div>
-      <button @click="copyRoomId" class="btn-copy">复制</button>
+      <div class="room-options">{{ totalRounds }}局 · 口令 {{ roomPassword }}</div>
+      <button @click="copyRoomId" class="btn-copy">复制房间号</button>
     </div>
 
     <div class="players-grid">
@@ -64,6 +64,7 @@ const socket = getSocket()
 const players = ref([...gameStore.players])
 const isCreator = ref(gameStore.isCreator)
 const totalRounds = ref(4)
+const roomPassword = ref(gameStore.roomPassword || '8888')
 
 const displaySlots = computed(() => {
   const slots = [...players.value]
@@ -71,30 +72,37 @@ const displaySlots = computed(() => {
   return slots
 })
 
+function syncRoomOptions(options) {
+  if (!options) return
+  totalRounds.value = options.totalRounds || 4
+  roomPassword.value = options.roomPassword || '8888'
+  gameStore.roomPassword = roomPassword.value
+}
+
 function handlePlayerJoined(data) {
   if (data.players) players.value = [...data.players]
-  if (data.options) totalRounds.value = data.options.totalRounds || 4
+  syncRoomOptions(data.options)
 }
 
 function handlePlayerLeft(data) {
   if (data.players) players.value = [...data.players]
 }
 
-function handleGameStarted(data) {
+function handleGameStarted() {
   router.push(`/game/${roomId.value}`)
 }
 
 function handleRoomState(data) {
   if (data.players) players.value = [...data.players]
   if (data.isCreator !== undefined) isCreator.value = data.isCreator
-  if (data.options) totalRounds.value = data.options.totalRounds || 4
+  syncRoomOptions(data.options)
 }
 
 onMounted(() => {
-  // Initialize from store (data saved during navigation from index.vue)
   if (gameStore.players.length > 0) {
     players.value = [...gameStore.players]
     isCreator.value = gameStore.isCreator
+    roomPassword.value = gameStore.roomPassword || '8888'
   }
 
   socket.on('player_joined', handlePlayerJoined)
@@ -102,7 +110,6 @@ onMounted(() => {
   socket.on('game_started', handleGameStarted)
   socket.on('room_state', handleRoomState)
 
-  // Request fresh state from server
   socket.emit('get_room_state', { roomId: roomId.value })
 })
 
@@ -124,9 +131,9 @@ function leaveRoom() {
 
 function copyRoomId() {
   navigator.clipboard.writeText(roomId.value).then(() => {
-    toast.show('房间号已复制: ' + roomId.value)
+    toast.show(`房间号已复制: ${roomId.value}`)
   }).catch(() => {
-    toast.show('复制失败，请手动复制: ' + roomId.value)
+    toast.show(`复制失败，请手动复制: ${roomId.value}`)
   })
 }
 </script>
@@ -200,14 +207,14 @@ function copyRoomId() {
 .player-slot.filled {
   border-style: solid;
   border-color: #5a9b5a;
-  background: rgba(76,175,80,0.1);
+  background: rgba(76, 175, 80, 0.1);
 }
 
 .player-avatar {
   width: 50px;
   height: 50px;
   border-radius: 50%;
-  background: #4CAF50;
+  background: #4caf50;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -256,15 +263,15 @@ function copyRoomId() {
 }
 
 .btn-start {
-  background: linear-gradient(135deg, #4CAF50, #2E7D32);
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
   color: white;
-  box-shadow: 0 4px 12px rgba(76,175,80,0.3);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
   animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
-  0%, 100% { box-shadow: 0 4px 12px rgba(76,175,80,0.3); }
-  50% { box-shadow: 0 4px 20px rgba(76,175,80,0.6); }
+  0%, 100% { box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3); }
+  50% { box-shadow: 0 4px 20px rgba(76, 175, 80, 0.6); }
 }
 
 .btn-leave {

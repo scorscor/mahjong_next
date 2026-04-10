@@ -5,7 +5,7 @@
         <span class="tile-emoji">🀄</span>
       </div>
       <h1 class="title">好友麻将</h1>
-      <p class="subtitle">好友约战，随时随地</p>
+      <p class="subtitle">好友约战，随时随地来一局</p>
     </div>
 
     <div class="actions">
@@ -50,9 +50,11 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { connectSocket, getSocket, disconnectSocket } from '@/utils/socket'
+import { connectSocket } from '@/utils/socket'
 import { useToast } from '@/composables/useToast'
 import { useGameStore } from '@/store/game'
+
+const DEFAULT_ROOM_PASSWORD = '8888'
 
 const router = useRouter()
 const toast = useToast()
@@ -62,21 +64,22 @@ const joinRoomId = ref('')
 const totalRounds = ref(4)
 const socket = connectSocket()
 
-function handleRoomCreated(data) {
-  localStorage.setItem('mahjong_player_name', playerName.value)
+function saveLobbyState(data) {
+  localStorage.setItem('mahjong_player_name', playerName.value.trim())
   gameStore.roomId = data.roomId
   gameStore.players = data.players || []
   gameStore.isCreator = data.isCreator || false
+  gameStore.roomPassword = data.options?.roomPassword || DEFAULT_ROOM_PASSWORD
   gameStore.playerName = playerName.value.trim()
+}
+
+function handleRoomCreated(data) {
+  saveLobbyState(data)
   router.push(`/room/${data.roomId}`)
 }
 
 function handleJoinSuccess(data) {
-  localStorage.setItem('mahjong_player_name', playerName.value)
-  gameStore.roomId = data.roomId
-  gameStore.players = data.players || []
-  gameStore.isCreator = data.isCreator || false
-  gameStore.playerName = playerName.value.trim()
+  saveLobbyState(data)
   router.push(`/room/${data.roomId}`)
 }
 
@@ -104,7 +107,12 @@ function createRoom() {
     toast.show('请输入昵称')
     return
   }
-  socket.emit('create_room', { name: playerName.value.trim(), totalRounds: totalRounds.value })
+
+  socket.emit('create_room', {
+    name: playerName.value.trim(),
+    totalRounds: totalRounds.value,
+    roomPassword: DEFAULT_ROOM_PASSWORD
+  })
 }
 
 function joinRoom() {
@@ -112,10 +120,13 @@ function joinRoom() {
     toast.show('请输入昵称')
     return
   }
+
   if (!joinRoomId.value.trim()) return
+
   socket.emit('join_room', {
     roomId: joinRoomId.value.trim().toUpperCase(),
-    name: playerName.value.trim()
+    name: playerName.value.trim(),
+    roomPassword: DEFAULT_ROOM_PASSWORD
   })
 }
 
@@ -124,8 +135,10 @@ function joinFailedReason(reason) {
     ROOM_NOT_FOUND: '房间不存在',
     ROOM_FULL: '房间已满',
     GAME_IN_PROGRESS: '游戏正在进行中',
-    ALREADY_JOINED: '你已经在这个房间里了'
+    ALREADY_JOINED: '你已经在这个房间里了',
+    INVALID_ROOM_PASSWORD: '房间口令错误'
   }
+
   return map[reason] || '加入失败'
 }
 </script>
@@ -155,7 +168,7 @@ function joinFailedReason(reason) {
   font-weight: bold;
   color: #f0d060;
   margin: 10px 0;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .subtitle {
@@ -177,7 +190,7 @@ function joinFailedReason(reason) {
   padding: 14px 16px;
   border: 2px solid #3a6b3a;
   border-radius: 12px;
-  background: rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.08);
   color: #e0e0e0;
   font-size: 16px;
   outline: none;
@@ -204,9 +217,9 @@ function joinFailedReason(reason) {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #4CAF50, #2E7D32);
+  background: linear-gradient(135deg, #4caf50, #2e7d32);
   color: white;
-  box-shadow: 0 4px 12px rgba(76,175,80,0.3);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
 }
 
 .btn-primary:active {
@@ -239,9 +252,9 @@ function joinFailedReason(reason) {
 }
 
 .round-btn.active {
-  background: #4CAF50;
+  background: #4caf50;
   color: white;
-  border-color: #4CAF50;
+  border-color: #4caf50;
 }
 
 .divider {
@@ -265,7 +278,7 @@ function joinFailedReason(reason) {
 .btn-secondary {
   width: auto;
   padding: 14px 28px;
-  background: rgba(255,255,255,0.12);
+  background: rgba(255, 255, 255, 0.12);
   color: #b0d0b0;
   border: 2px solid #3a6b3a;
 }
